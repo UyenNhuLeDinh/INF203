@@ -7,7 +7,7 @@ def main():
     rho_vapor = 0.02
     
     our_box = Box(Lx, Ly, rho_liquid, rho_vapor)
-    print(our_box._compartments)
+    our_box.populate_box()
     print('The total number of molecules: ', len(our_box._molecules))
     
     
