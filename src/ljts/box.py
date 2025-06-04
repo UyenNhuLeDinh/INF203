@@ -1,4 +1,5 @@
 import random
+import math
 from .molecule import Molecule
 
 class Box:
@@ -66,11 +67,53 @@ class Box:
             else: # "upper" region
                 y_min, y_max = 0.6 * self._Ly, self._Ly
             
+            # Random configuration generation on positions of molecules:
             for _ in range(num_molecules):
                 x = random.uniform(0, self._Lx)
                 y = random.uniform(y_min, y_max)
                 z = random.uniform(0, self._Lz)
                 self._molecules.append(Molecule(x,y,z))
+                
+    def compute_potential(self):
+        # Different molecule positions on each run by random:
+        random.seed()
+        
+        self.populate_box()
+        # Get positions of all molecules:
+        for mol in self._molecules:
+            positions = [(mol._x, mol._y, mol._z)]
+            
+            # Number of molecules:
+            N = len(positions)
+            
+        def LJ_potential(r_ij):
+            if r_ij < 2.5:
+                inv_r6 = (1 / r_ij**6)
+                inv_r12 = inv_r6 ** 2
+                return 4 * (inv_r12 - inv_r6) + 0.01631689
+            else:
+                return 0
+            
+        def distance():
+            pass
+            
+        E_pot = 0
+        for i in range(N):
+            xi, yi, zi = positions[i]
+            for j in range (i+1, N):
+                xj, yj, zj = positions[j]
+                
+                dx = xj - xi
+                dy = yj - yi
+                dz = zj - zi
+                
+                r_ij = math.sqrt(dx**2 + dy**2 + dz**2)
+                E_pot += LJ_potential(r_ij)
+        
+        print('The total potential energy:', E_pot)
+        return E_pot    
+                
+
         
 
             
