@@ -70,24 +70,30 @@ class MonteCarloSimulator:
         for _ in range(len(self._box._molecules)):
             self.metropolis_algorithm()
             
+            
     def run_simulation(self):
         for step in range(self._steps):
             self.MC_step()
             
             # Collect output every 20 steps:
-            if step % 20 == 0:
+            if step % 10 == 0:
                 total_energy = self.compute_total_energy()
                 print(f"Step {step}: Potential energy of the box = {total_energy}")
                 self._energy_log.append(total_energy)
                 
+                
     def energy_analysis(self):
-        avg_energy = sum(self._energy_log) / len(self._energy_log)
+        # Skip the first few lines:
+        sample_data = self._energy_log[2:]
+        avg_energy = sum(sample_data) / len(sample_data)
         print(f"The average energy over {self._steps} steps : {avg_energy}")
         
-        plt.plot(self._energy_log)
+        plt.plot(sample_data)
+        plt.axhline(avg_energy, color='red', linestyle='--', label='Avg. Energy')
         plt.xlabel("Every 10 steps")
         plt.ylabel("Potential Energy")
         plt.title("Energy of the Box during Monte Carlo Simulation")
+        plt.legend()
         plt.show()
         
                 
