@@ -20,6 +20,11 @@ class Molecule:
     def position(self):
         " Return the 3D coordinates of the molecule as a tuple."
         self._position = (self._x, self._y, self._z)
+        return self._position
+        
+    def set_position(self, position):
+        self._x, self._y, self._z = position
+        
     
         
     

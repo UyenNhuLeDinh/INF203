@@ -2,6 +2,21 @@ import random
 import numpy as np
 from .molecule import Molecule
 
+def pbc_distance(dx: float, L: float):
+            """Apply minimum image convention for periodic boundary conditions.
+            
+            Args:
+                dx (float): Displacement along one coordinate axis (xj - xi).
+                L (float): Length of the periodic box in that direction.
+                
+            Returns:
+                float: The shortest distance between two molecules' image on a particular direction.
+                
+            Notes:
+                round(dx/L) gives the nearest image of the second molecule.
+            """
+            return dx - round(dx / L) * L
+
 class Box:
     def __init__(self, Lx: float, Ly: float, rho_liquid: float, rho_vapor: float):
         """Create the simulation cuboid with given dimensions and phase densities.
@@ -44,6 +59,10 @@ class Box:
         self._molecules = []
         
         
+    def dimensions(self):
+        return (self._Lx, self._Ly, self._Lz)
+    
+        
     def compartment(self):
         """Define compartment volumes and store them in self._compartments.
         Note: 
@@ -66,7 +85,8 @@ class Box:
             "upper": self._rho_vapor
             }
         
-        
+
+
     def populate_box(self):
         """Populate the simulation box with molecules randomly placed in each compartment.
             The number of molecules is the product of densities and compartment volumes.
@@ -97,8 +117,29 @@ class Box:
                 z = random.uniform(0, self._Lz)
                 self._molecules.append(Molecule(x,y,z))
                 
-        print('The total number of molecules: ', len(self._molecules))       
+        print('The total number of molecules: ', len(self._molecules))   
+        
+            
+        
+    def LJ_potential(self, r_ij: float):
+            """Calculate Lennard-Jones potential energy between a pair of molecules.
+            
+            Args:
+                r_ij (float): The distance between molecule i and j.
                 
+            Returns:
+                float: Pairwise Lennard-Jones energy with truncation and shift.
+            """
+            shift = 4 * ((1 / self._cutoff ** 12) - (1 / self._cutoff** 6))
+            
+            if r_ij ** 2 < self._cutoff ** 2:
+                inv_r6 = r_ij ** -6
+                inv_r12 = inv_r6 ** 2
+                return 4 * (inv_r12 - inv_r6) - shift
+            else:
+                return 0   
+            
+                 
                 
     def compute_potential(self):
         """Compute the total potential energy of the box using the pairwise 
@@ -120,42 +161,7 @@ class Box:
             
         # Number of molecules:
         N = len(positions)
-        
             
-        def LJ_potential(r_ij: float):
-            """Calculate Lennard-Jones potential energy between a pair of molecules.
-            
-            Args:
-                r_ij (float): The distance between molecule i and j.
-                
-            Returns:
-                float: Pairwise Lennard-Jones energy with truncation and shift.
-            """
-            shift = 4 * ((1 / self._cutoff ** 12) - (1 / self._cutoff** 6))
-            
-            if r_ij ** 2 < self._cutoff ** 2:
-                inv_r6 = r_ij ** -6
-                inv_r12 = inv_r6 ** 2
-                return 4 * (inv_r12 - inv_r6) - shift
-            else:
-                return 0
-            
-            
-        def pbc_distance(dx: float, L: float):
-            """Apply minimum image convention for periodic boundary conditions.
-            
-            Args:
-                dx (float): Displacement along one coordinate axis (xj - xi).
-                L (float): Length of the periodic box in that direction.
-                
-            Returns:
-                float: The shortest distance between two molecules' image on a particular direction.
-                
-            Notes:
-                round(dx/L) gives the nearest image of the second molecule.
-            """
-            return dx - round(dx / L) * L
-        
         
         # Iterations to cummulate the potential energy:
         E_pot = 0
@@ -170,12 +176,40 @@ class Box:
                 dz = pbc_distance(zj - zi, self._Lz)
                 
                 r_ij = np.sqrt(dx**2 + dy**2 + dz**2)
-                E_pot += LJ_potential(r_ij)
+                E_pot += self.LJ_potential(r_ij)
         
         print('The total potential energy:', E_pot)
         return E_pot    
                 
+                
 
+    def molecular_energy(self, i: int):
+        """Compute the potential energy of molecule i with others 
+        using Lennard-Jones potential.
+
+        Args:
+            i (int): The molecule i in the system.
+        """
+        mol_i = self._molecules[i]
+        xi, yi, zi = mol_i.position()
+        energy = 0
         
-
+        for j, mol_j in enumerate(self._molecules):
+            if j == i :
+                continue
+            xj, yj, zj = mol_j.position()
             
+            dx = pbc_distance(xj - xi, self._Lx) 
+            dy = pbc_distance(yj - yi, self._Ly)
+            dz = pbc_distance(zj - zi, self._Lz)
+            
+            r_ij = np.sqrt(dx**2 + dy**2 + dz**2)
+            energy += self.LJ_potential(r_ij)
+        
+        return energy
+            
+            
+        
+            
+            
+    
