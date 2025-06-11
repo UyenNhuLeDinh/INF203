@@ -59,7 +59,7 @@ class MonteCarloSimulator:
         
         
     def MC_step(self):
-        """Perform one MC step containing N test actions (a sweep)
+        """Perform one MC step containing N test actions.
         """
         for _ in range(self._box.num_molecules):
             self.metropolis_algorithm()
@@ -70,7 +70,7 @@ class MonteCarloSimulator:
             self.MC_step()
             
             # Collect output every 20 steps:
-            if step % 10 == 0:
+            if step % 50 == 0:
                 total_energy = self._box.compute_potential()
                 print(f"Step {step}: Potential energy of the box = {total_energy}")
                 self._energy_log.append(total_energy)
@@ -84,7 +84,7 @@ class MonteCarloSimulator:
         
         plt.plot(sample_data)
         plt.axhline(avg_energy, color='red', linestyle='--', label='Avg. Energy')
-        plt.xlabel("Every 10 steps")
+        plt.xlabel("Every 20 steps")
         plt.ylabel("Potential Energy")
         plt.title("Energy of the Box during Monte Carlo Simulation")
         plt.legend()
