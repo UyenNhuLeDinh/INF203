@@ -20,8 +20,9 @@ class MonteCarloSimulator:
         """
         
         # Select a random molecule i:
-        i = random.randint(0, len(self._box._molecules) - 1)
-        mol = self._box._molecules[i]
+        i = random.randint(0, self._box.num_molecules - 1)
+        mol = self._box.molecules[i]
+
         
         old_pos = mol.position()
         
@@ -30,7 +31,7 @@ class MonteCarloSimulator:
         
         # Random displacement in [-b, b] for each dimension with PBC conditions:
         old_x, old_y, old_z = old_pos
-        Lx, Ly, Lz = self._box.dimensions()
+        Lx, Ly, Lz = self._box.dimensions
         
         new_x = pbc_distance(old_x + random.uniform(-self._b, self._b), Lx)
         new_y = pbc_distance(old_y + random.uniform(-self._b, self._b), Ly)
@@ -57,17 +58,10 @@ class MonteCarloSimulator:
         self._total_moves += 1
         
         
-    def compute_total_energy(self):
-        energy = 0
-        for i in range(len(self._box._molecules)):
-            energy += self._box.molecular_energy(i)
-        return energy / 2  #Avoid counting pair-wise interactions twice
-        
-        
     def MC_step(self):
         """Perform one MC step containing N test actions (a sweep)
         """
-        for _ in range(len(self._box._molecules)):
+        for _ in range(self._box.num_molecules):
             self.metropolis_algorithm()
             
             
@@ -77,7 +71,7 @@ class MonteCarloSimulator:
             
             # Collect output every 20 steps:
             if step % 10 == 0:
-                total_energy = self.compute_total_energy()
+                total_energy = self._box.compute_potential()
                 print(f"Step {step}: Potential energy of the box = {total_energy}")
                 self._energy_log.append(total_energy)
                 

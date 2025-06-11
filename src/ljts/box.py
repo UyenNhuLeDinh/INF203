@@ -4,16 +4,12 @@ from .molecule import Molecule
 
 def pbc_distance(dx: float, L: float):
             """Apply minimum image convention for periodic boundary conditions.
-            
             Args:
                 dx (float): Displacement along one coordinate axis (xj - xi).
                 L (float): Length of the periodic box in that direction.
-                
             Returns:
                 float: The shortest distance between two molecules' image on a particular direction.
-                
-            Notes:
-                round(dx/L) gives the nearest image of the second molecule.
+            Notes: round(dx/L) gives the nearest image of the second molecule.
             """
             return dx - round(dx / L) * L
 
@@ -57,10 +53,7 @@ class Box:
         
         # List stores all molecules' coordinates in the box:
         self._molecules = []
-        
-        
-    def dimensions(self):
-        return (self._Lx, self._Ly, self._Lz)
+
     
         
     def compartment(self):
@@ -84,8 +77,7 @@ class Box:
             "middle": self._rho_liquid,
             "upper": self._rho_vapor
             }
-        
-
+    
 
     def populate_box(self):
         """Populate the simulation box with molecules randomly placed in each compartment.
@@ -116,10 +108,24 @@ class Box:
                 y = random.uniform(y_min, y_max)
                 z = random.uniform(0, self._Lz)
                 self._molecules.append(Molecule(x,y,z))
-                
-        print('The total number of molecules: ', len(self._molecules))   
+                  
         
-            
+    @property
+    def num_molecules(self):
+        """Return the number of molecules in the box."""
+        return len(self._molecules)
+    
+    @property
+    def molecules(self):
+        """Return a copy of the molecule list to prevent external 
+        modifications.
+        """
+        return self._molecules.copy()
+    
+    @property
+    def dimensions(self):
+        return (self._Lx, self._Ly, self._Lz)
+    
         
     def LJ_potential(self, r_ij: float):
             """Calculate Lennard-Jones potential energy between a pair of molecules.
@@ -139,50 +145,7 @@ class Box:
             else:
                 return 0   
             
-                 
-                
-    def compute_potential(self):
-        """Compute the total potential energy of the box using the pairwise 
-        Lennard-Jones truncated-shifted (LJTS) energy.
-        
-        Returns:
-            float: The total potential energy of the box.
             
-        Raises:
-            ValueError: If no molecules are initialized in the box.     
-        
-        Notes:
-            - Assumes all molecules have unit mass of 1.
-            - Only pairs within a cutoff radius of 2.5 are considered.
-            - The LJ potential is shifted to ensure continuity at the cutoff.     
-        """
-        # Get positions of all molecules:
-        positions = [(mol._x, mol._y, mol._z) for mol in self._molecules]
-            
-        # Number of molecules:
-        N = len(positions)
-            
-        
-        # Iterations to cummulate the potential energy:
-        E_pot = 0
-        for i in range(N):
-            xi, yi, zi = positions[i]
-            
-            for j in range (i+1, N):
-                xj, yj, zj = positions[j]
-                
-                dx = pbc_distance(xj - xi, self._Lx) 
-                dy = pbc_distance(yj - yi, self._Ly)
-                dz = pbc_distance(zj - zi, self._Lz)
-                
-                r_ij = np.sqrt(dx**2 + dy**2 + dz**2)
-                E_pot += self.LJ_potential(r_ij)
-        
-        print('The total potential energy:', E_pot)
-        return E_pot    
-                
-                
-
     def molecular_energy(self, i: int):
         """Compute the potential energy of molecule i with others 
         using Lennard-Jones potential.
@@ -207,6 +170,32 @@ class Box:
             energy += self.LJ_potential(r_ij)
         
         return energy
+                
+                
+    def compute_potential(self):
+        """Compute the total potential energy of the box using the pairwise 
+        Lennard-Jones truncated-shifted (LJTS) energy.
+        
+        Returns:
+            float: The total potential energy of the box.   
+        
+        Notes:
+            - Assumes all molecules have unit mass of 1.
+            - Only pairs within a cutoff radius of 2.5 are considered.
+            - The LJ potential is shifted to ensure continuity at the cutoff.     
+        """
+        if not self._molecules:
+            raise ValueError("No molecules in the box to compute potential!")
+        
+        total_energy = 0
+        for i in range(self.num_molecules):
+            total_energy += self.molecular_energy(i)
+        
+        return total_energy / 2   
+                
+                
+
+    
             
             
         
