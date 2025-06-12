@@ -25,6 +25,8 @@ class Molecule:
     def set_position(self, position):
         self._x, self._y, self._z = position
         
+    def clone(self):
+        return Molecule(self.position())
     
         
     
