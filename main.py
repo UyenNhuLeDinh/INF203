@@ -8,7 +8,7 @@ def main():
     
     Lx = 5.0
     Ly = 40
-    rho_liquid = 0.02
+    rho_liquid = 0.73
     rho_vapor = 0.02
     
     our_box = Box(Lx, Ly, rho_liquid, rho_vapor)
@@ -27,7 +27,7 @@ def main():
     #print(f"Acceptance ratio: {sim._accepted_moves / sim._total_moves}")
     
     # Show results:
-    sim.energy_analysis()
+    #sim.energy_analysis()
     
     
 if __name__ == "__main__":

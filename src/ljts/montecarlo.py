@@ -3,6 +3,7 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 from .box import pbc_distance
+from .xyz_writer import write_xyz, add_xyz_frame
 
 class MonteCarloSimulator:
     def __init__(self, T, b, box, steps):
@@ -66,14 +67,29 @@ class MonteCarloSimulator:
             
             
     def run_simulation(self):
-        for step in range(self._steps):
+        init_positions = self._box.get_positions
+        write_xyz("data/config_init.xyz", init_positions, comment="Initial configuration")
+        
+        # Clear the trajectory file at the start:
+        open("data/trajectory.xyz", "w").close()
+        # Record Frame 0:
+        add_xyz_frame("data/trajectory.xyz", init_positions, comment="Frame 0")
+        
+        for step in range(1, self._steps + 1):
             self.MC_step()
             
-            # Collect output every 20 steps:
-            if step % 50 == 0:
+            # Collect output every 200 steps:
+            if step % 200 == 0:
                 total_energy = self._box.compute_potential()
                 print(f"Step {step}: Potential energy of the box = {total_energy}")
                 self._energy_log.append(total_energy)
+                
+                current_positions = self._box.get_positions
+                add_xyz_frame("data/trajectory.xyz", current_positions, comment=f"Frame {step}")
+        
+        final_positions = self._box.get_positions            
+        write_xyz("data/config_final.xyz", final_positions, comment="Final configuration")
+        
                 
                 
     def energy_analysis(self):

@@ -123,8 +123,13 @@ class Box:
         return self._molecules.copy()
     
     @property
+    def get_positions(self):
+        return [mol.position() for mol in self.molecules]
+    
+    @property
     def dimensions(self):
         return (self._Lx, self._Ly, self._Lz)
+    
     
         
     def LJ_potential(self, r_ij: float):
